@@ -80,7 +80,7 @@ services:
     depends_on:
       - kurento
       - orion
-    env_file: Kurento.env
+    env_file: .env
     environment:
       - ORION_NOTIFICATION_URL=https://${IP_ADDRESS}:${SERVER_PORT}/cameras
       - KURENTO_IP=${IP_ADDRESS}:8888
@@ -95,7 +95,7 @@ services:
     depends_on:
       - application-server
     env_file:
-      - Kurento.env
+      - .env
 
 
 networks:
