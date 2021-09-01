@@ -1,0 +1,109 @@
+version: "3.5"
+services:
+  # Orion is the context broker
+  orion:
+    image: fiware/orion:${ORION_VERSION}
+    hostname: orion
+    container_name: fiware-orion
+    depends_on:
+      - mongo-db
+    networks:
+      - default
+    ports:
+      - "${ORION_PORT}:${ORION_PORT}" # localhost:1026
+    command: -dbhost mongo-db -logLevel DEBUG -noCache -corsOrigin __ALL -insecureNotif
+    healthcheck:
+      test: curl --fail -s http://orion:${ORION_PORT}/version || exit 1
+      interval: 5s
+
+  # Databases
+  mongo-db:
+    image: mongo:${MONGO_DB_VERSION}
+    hostname: mongo-db
+    container_name: db-mongo
+    expose:
+      - "${MONGO_DB_PORT}"
+    ports:
+      - "${MONGO_DB_PORT}:${MONGO_DB_PORT}" # localhost:27017 # localhost:27017
+    networks:
+      - default
+    volumes:
+      - mongo-db:/data
+      - "${MONGO_HOST_PATH}:/data/db"
+    healthcheck:
+      test: |
+        host=`hostname --ip-address || echo '127.0.0.1'`; 
+        mongo --quiet $host/test --eval 'quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)' && echo 0 || echo 1
+      interval: 5s
+      
+  kurento:
+    build: 
+      context: kurento-media-server/
+      dockerfile: Dockerfile
+    image: kurento/gtc-kurento-media-server:6.16.0
+    hostname: kms
+    container_name: KMS
+    depends_on:
+      - coturn
+    expose:
+      - "8888"
+    ports:
+      - 8888:8888
+    networks:
+      - default
+    env_file:
+      - .env
+    environment:
+      - KMS_STUN_IP=${IP_ADDRESS}
+      - KMS_STUN_PORT=${KMS_STUN_PORT}
+      - "KMS_TURN_URL=${TURN_USERNAME}:${TURN_PASSWORD}@${IP_ADDRESS}:${KMS_TURN_PORT}"
+    volumes:
+      - "${HOST_IMAGE_FOLDER}:${DOCKER_IMAGE_FOLDER}"
+
+  coturn:
+    image: coturn/coturn:latest
+    hostname: coturn
+    container_name: coturn
+    network_mode: host
+    command: -L ${KMS_STUN_IP} -n --verbose --realm kurento.org --cipher-list ${CIPHER_LIST} --fingerprint --lt-cred-mech --listening-port ${KMS_TURN_PORT} --max-allocate-timeout=0 --relay-ip ${KMS_STUN_IP} && turnadmin -a -u ${TURN_USERNAME} -r kurento.org -p ${TURN_PASSWORD}
+    volumes:
+      - /var/lib/coturn:/var/lib/coturn
+
+  application-server:
+    build: 
+      context: kurento-application-server/
+      dockerfile: Dockerfile
+    image: springio/gtc-kurento-application-server:latest
+    hostname: kurento-application-server
+    container_name: kurento-application-server
+    network_mode: host
+    depends_on:
+      - kurento
+      - orion
+    env_file: Kurento.env
+    environment:
+      - ORION_NOTIFICATION_URL=https://${IP_ADDRESS}:${SERVER_PORT}/cameras
+      - KURENTO_IP=${IP_ADDRESS}:8888
+  app:
+    build: 
+      context: react/
+      dockerfile: Dockerfile
+    image: react/gtc-react
+    hostname: ReactAPP
+    container_name: ReactAPP
+    network_mode: host
+    depends_on:
+      - application-server
+    env_file:
+      - Kurento.env
+
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 192.168.98.0/24
+
+volumes:
+  mongo-db: ~
+
