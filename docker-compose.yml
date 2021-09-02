@@ -67,7 +67,7 @@ services:
     network_mode: host
     command: -L ${KMS_STUN_IP} -n --verbose --realm kurento.org --cipher-list ${CIPHER_LIST} --fingerprint --lt-cred-mech --listening-port ${KMS_TURN_PORT} --max-allocate-timeout=0 --relay-ip ${KMS_STUN_IP} && turnadmin -a -u ${TURN_USERNAME} -r kurento.org -p ${TURN_PASSWORD}
     volumes:
-      - /var/lib/coturn:/var/lib/coturn
+      - "${COTURN_DB_PATH}:/var/lib/coturn"
 
   application-server:
     build: 
