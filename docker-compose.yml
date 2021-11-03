@@ -82,7 +82,7 @@ services:
       - orion
     env_file: .env
     environment:
-      - ORION_NOTIFICATION_URL=https://${IP_ADDRESS}:${SERVER_PORT}/cameras
+      - ORION_NOTIFICATION_URL=http://${IP_ADDRESS}:${SERVER_PORT}/cameras
       - KURENTO_IP=${IP_ADDRESS}:8888
   app:
     build: 
@@ -96,6 +96,10 @@ services:
       - application-server
     env_file:
       - .env
+    environment:
+      - REACT_APP_SERVICES_IP=${IP_ADDRESS}
+      - REACT_APP_TURN_USERNAME=${TURN_USERNAME}
+      - REACT_APP_TURN_PASSWORD=${TURN_PASSWORD}
 
 
 networks:
