@@ -3,4 +3,4 @@ Imágenes docker para el sistema de visualización de cámaras stream y estátic
 
 Para desplegar el sistema, utilizamos el siguiente comando:
 
-docker-compose up -d
+`docker-compose up -d`
