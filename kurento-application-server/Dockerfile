@@ -1,5 +1,7 @@
 FROM openjdk:8-jdk-alpine
 RUN apk update && apk add bash
+RUN mkdir config
+RUN touch /config/users.txt /config/cameras.txt
 RUN apk add git
 RUN apk add maven
 RUN git clone https://github.com/ismaelvarez/kurento.git

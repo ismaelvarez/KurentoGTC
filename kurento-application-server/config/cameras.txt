@@ -1,0 +1,2 @@
+http://161.72.94.24/mjpeg.cgi
+https://atmosportal.gtc.iac.es/webcams/camaraAllSky.jpg

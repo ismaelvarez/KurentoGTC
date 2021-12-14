@@ -84,6 +84,9 @@ services:
     environment:
       - ORION_NOTIFICATION_URL=http://${IP_ADDRESS}:${SERVER_PORT}/cameras
       - KURENTO_IP=${IP_ADDRESS}:8888
+    volumes:
+      - ./kurento-application-server/config/users.txt:/config/users.txt
+      - ./kurento-application-server/config/cameras.txt:/config/cameras.txt
   app:
     build: 
       context: react/
