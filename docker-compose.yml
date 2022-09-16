@@ -40,69 +40,28 @@ services:
     build: 
       context: kurento-media-server/
       dockerfile: Dockerfile
-    image: kurento/gtc-kurento-media-server:6.16.0
+    image: kms:0.1
     hostname: kms
     container_name: KMS
-    depends_on:
-      - coturn
-    expose:
-      - "8888"
-    ports:
-      - 8888:8888
-    networks:
-      - default
+    network_mode: host
     env_file:
       - .env
-    environment:
-      - KMS_STUN_IP=${IP_ADDRESS}
-      - KMS_STUN_PORT=${KMS_STUN_PORT}
-      - "KMS_TURN_URL=${TURN_USERNAME}:${TURN_PASSWORD}@${IP_ADDRESS}:${KMS_TURN_PORT}"
     volumes:
       - "${HOST_IMAGE_FOLDER}:${DOCKER_IMAGE_FOLDER}"
-
-  coturn:
-    image: coturn/coturn:latest
-    hostname: coturn
-    container_name: coturn
-    network_mode: host
-    command: -L ${IP_ADDRESS} -n --verbose --realm kurento.org --cipher-list ${CIPHER_LIST} --fingerprint --lt-cred-mech --listening-port ${KMS_TURN_PORT} --max-allocate-timeout=0 --relay-ip ${IP_ADDRESS} && turnadmin -a -u ${TURN_USERNAME} -r kurento.org -p ${TURN_PASSWORD}
-    volumes:
-      - "${COTURN_DB_PATH}:/var/lib/coturn"
-
-  application-server:
-    build: 
-      context: kurento-application-server/
-      dockerfile: Dockerfile
-    image: springio/gtc-kurento-application-server:latest
-    hostname: kurento-application-server
-    container_name: kurento-application-server
+      
+  kas:      
+    image: kas:latest
+    hostname: kas 
+    container_name: kas
     network_mode: host
     depends_on:
       - kurento
       - orion
     env_file: .env
-    environment:
-      - ORION_NOTIFICATION_URL=http://${IP_ADDRESS}:${SERVER_PORT}/cameras
-      - KURENTO_IP=${IP_ADDRESS}:8888
     volumes:
       - ./kurento-application-server/config/users.txt:/config/users.txt
       - ./kurento-application-server/config/cameras.txt:/config/cameras.txt
-  app:
-    build: 
-      context: react/
-      dockerfile: Dockerfile
-    image: react/gtc-react
-    hostname: ReactAPP
-    container_name: ReactAPP
-    network_mode: host
-    depends_on:
-      - application-server
-    env_file:
-      - .env
-    environment:
-      - REACT_APP_SERVICES_IP=${IP_ADDRESS}
-      - REACT_APP_TURN_USERNAME=${TURN_USERNAME}
-      - REACT_APP_TURN_PASSWORD=${TURN_PASSWORD}
+
 
 
 networks:
